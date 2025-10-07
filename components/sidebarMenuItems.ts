@@ -15,18 +15,19 @@ const D = (): MenuItem => ({ type: "divider" } as MenuItem);
 
 /** Tüm item’lar (roles tanımıyla) */
 const allItems: (MenuItem & { roles?: Role[] })[] = [
-  // ⛔ Panel: sadece admin görsün
-  { key: "/configure", icon: React.createElement(DashboardOutlined), label: "E-Posta Yapılandırması" },
-
-  { key: "/calculate", icon: React.createElement(HomeOutlined), label: "Test" },
-  { key: "/reports", icon: React.createElement(UserOutlined), label: "Test 2" },
+  { key: "/panel", icon: React.createElement(DashboardOutlined), label: "Ana Sayfa" },
+  { key: "/configure", icon: React.createElement(HomeOutlined), label: "E-Posta Yapılandırması" },
+  { key: "/customers", icon: React.createElement(UserOutlined), label: "Müşteri Listesi" },
+  { key: "/calendar", icon: React.createElement(DashboardOutlined), label: "Takvim" },
+  { key: "/send", icon: React.createElement(HomeOutlined), label: "E-Posta Gönder" },
+  { key: "/payment/details", icon: React.createElement(UserOutlined), label: "Ödeme Detayları" },
   
 ];
 
 /** Bölümleme: ilk iki, orta kısım, son iki — senin yapına sadık */
 const sliceIntoSections = (items: (MenuItem & { roles?: Role[] })[]) => {
-  const first = items.slice(0, 3);
-  const middle = items.slice(2, -2);
+  const first = items.slice(0, 6);
+  const middle = items.slice(2, 0);
   const last = items.slice(-2);
   return { first, middle, last };
 };
