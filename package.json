@@ -10,9 +10,13 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
-    "@ant-design/plots": "^2.6.5",
+    "@ant-design/plots": "^2.6.6",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
     "@fullcalendar/react": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
     "@reduxjs/toolkit": "^2.9.0",
     "ant-design": "^1.0.0",
     "antd": "^5.27.4",
@@ -22,7 +26,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-redux": "^9.2.0",
-    "react-to-print": "^3.1.1",
+    "react-to-print": "^3.2.0",
     "tailwind": "^4.0.0",
     "xlsx": "^0.18.5"
   },

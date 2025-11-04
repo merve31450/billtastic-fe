@@ -3,36 +3,45 @@ import React from "react";
 import type { MenuProps } from "antd";
 import {
   DashboardOutlined,
-  UserOutlined,
   HomeOutlined,
+  UserOutlined,
+  CalendarOutlined,
+  SendOutlined,
+  CreditCardOutlined,
+  CheckSquareOutlined, // 🧩 Görevlerim ikonu
 } from "@ant-design/icons";
 
+/* ==============================
+   TİPLER ve ROLLER
+============================== */
 type MenuItem = Required<MenuProps>["items"][number];
 type Role = "admin" | "user" | "expert" | "guest";
 
-/** Divider yardımcı */
+/* ==============================
+   🔹 Divider yardımcı fonksiyonu
+============================== */
 const D = (): MenuItem => ({ type: "divider" } as MenuItem);
 
-/** Tüm item’lar (roles tanımıyla) */
+/* ==============================
+    TÜM MENÜLER
+============================== */
 const allItems: (MenuItem & { roles?: Role[] })[] = [
   { key: "/panel", icon: React.createElement(DashboardOutlined), label: "Ana Sayfa" },
-  { key: "/configure", icon: React.createElement(HomeOutlined), label: "E-Posta Yapılandırması" },
+  { key: "/configure", icon: React.createElement(HomeOutlined), label: "Faturalandırma" },
   { key: "/customers", icon: React.createElement(UserOutlined), label: "Müşteri Listesi" },
-  { key: "/calendar", icon: React.createElement(DashboardOutlined), label: "Takvim" },
-  { key: "/send", icon: React.createElement(HomeOutlined), label: "E-Posta Gönder" },
-  { key: "/payment/details", icon: React.createElement(UserOutlined), label: "Ödeme Detayları" },
-  
+  { key: "/calendar", icon: React.createElement(CalendarOutlined), label: "Takvim" },
+  { key: "/send", icon: React.createElement(SendOutlined), label: "E-Posta Gönder" },
+  { key: "/payment/details", icon: React.createElement(CreditCardOutlined), label: "Ödeme Detayları" },
+
+
+
+
+  { key: "/tasks", icon: React.createElement(CheckSquareOutlined), label: "Görevlerim" },
 ];
 
-/** Bölümleme: ilk iki, orta kısım, son iki — senin yapına sadık */
-const sliceIntoSections = (items: (MenuItem & { roles?: Role[] })[]) => {
-  const first = items.slice(0, 6);
-  const middle = items.slice(2, 0);
-  const last = items.slice(-2);
-  return { first, middle, last };
-};
-
-/** Divider’ları normalize et: baş/sonda olmasın, ardışık olmasın */
+/* ==============================
+    Divider temizleyici
+============================== */
 const normalizeDividers = (items: MenuItem[]): MenuItem[] => {
   const out: MenuItem[] = [];
   for (const it of items) {
@@ -42,33 +51,34 @@ const normalizeDividers = (items: MenuItem[]): MenuItem[] => {
       "type" in (out[out.length - 1] || {}) &&
       (out[out.length - 1] as any).type === "divider";
 
-    if (isDivider && (prevIsDivider || out.length === 0)) continue; // başta veya üst üste divider olmasın
+    // üst üste veya baştaki divider'ları atla
+    if (isDivider && (prevIsDivider || out.length === 0)) continue;
     out.push(it);
   }
-  // sonda divider varsa at
-  while (out.length && "type" in (out[out.length - 1] || {}) && (out[out.length - 1] as any).type === "divider") {
+  // sondaki divider'ı da kaldır
+  while (
+    out.length &&
+    "type" in (out[out.length - 1] || {}) &&
+    (out[out.length - 1] as any).type === "divider"
+  ) {
     out.pop();
   }
   return out;
 };
 
-/** Role’e göre filtrele + sections arası divider ekle + normalize et */
+/* ==============================
+    Role göre filtreleme fonksiyonu
+============================== */
 export const getMenuItemsByRole = (roleRaw?: string): MenuItem[] => {
   const role = (roleRaw || "user").toLowerCase() as Role;
 
+  // Rol bazlı filtre
   const visible = allItems.filter((it) => {
-    if ("type" in (it as any)) return true; // güvenlik: divider’ı bloklamıyoruz (zaten normalize edeceğiz)
-    if (!("roles" in it) || !it.roles || it.roles.length === 0) return true; // rol belirtilmemişse herkese açık
+    if ("type" in (it as any)) return true; // divider’ı engelleme
+    if (!("roles" in it) || !it.roles || it.roles.length === 0) return true; // herkese açık
     return it.roles.map((r) => r.toLowerCase()).includes(role);
   });
 
-  const { first, middle, last } = sliceIntoSections(visible as any);
-
-  const stitched: MenuItem[] = [
-    ...first,
-    ...(first.length && middle.length ? [D()] : []),
-    ...middle,
-  ];
-
-  return normalizeDividers(stitched);
+  // Divider'ları düzenle
+  return normalizeDividers(visible);
 };

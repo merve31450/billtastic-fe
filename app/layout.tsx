@@ -6,7 +6,7 @@ import AntdProviders from "./AntdProviders";
 
 
 export const metadata: Metadata = {
-  title: "Portal ASO",
+  title: "Billtastic",
   description: "U2 Soft",
 };
 

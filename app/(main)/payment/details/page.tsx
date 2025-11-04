@@ -245,7 +245,8 @@ export default function PaymentDetailsPage() {
                     block
                     size="large"
                     loading={loading}
-                    disabled={!canSubmit}
+                    disabled={canSubmit}
+                    
                   >
                     Ödeme Yap
                   </Button>
@@ -255,9 +256,10 @@ export default function PaymentDetailsPage() {
 
             <Col xs={24} md={10} className="flex justify-center">
               {/* Kendi görselini /public/images/card.png altına koyabilirsin */}
-              <div className="w-[320px] h-[200px] relative">
+              <div className="w-[350px] h-[220px] relative -mt-10 ml-10">
+                
                 <Image
-                  src="/images/card.png"
+                  src="/card.png"
                   alt="Credit Card Illustration"
                   fill
                   className="object-contain"

@@ -41,7 +41,7 @@ function base64ToDataUrl(b64?: string) {
 function initialsFrom(me: any) {
   const name = (me?.firstName && me?.lastName)
     ? `${me.firstName} ${me.lastName}`
-    : (me?.username || "").split("@")[0];
+    : (me?.username || me?.email || "").split("@")[0];
   const parts = name.trim().split(/\s+/);
   return (parts[0]?.[0] || "").toUpperCase() + (parts[1]?.[0] || "").toUpperCase();
 }
@@ -60,7 +60,7 @@ function SidebarHeader({
   const router = useRouter();
 
   const logoBoxWidth = collapsed ? 45 : 125;
-  const logoBoxHeight = collapsed ? 50 : 100;
+  const logoBoxHeight = collapsed ? 40 : 90;
 
   const handleLogoClick = React.useCallback(() => {
     router.push("/panel");
@@ -79,7 +79,7 @@ function SidebarHeader({
         paddingInline: 12,
       }}
     >
-      {/* LOGO (tıklanabilir) */}
+      {/* LOGO */}
       <div
         role="button"
         aria-label="Modüller sayfasına git"
@@ -93,30 +93,33 @@ function SidebarHeader({
         }}
         className="relative overflow-hidden cursor-pointer select-none"
         style={{
-          
           width: logoBoxWidth,
           height: logoBoxHeight,
           transition: "width 220ms ease, height 220ms ease",
-          marginLeft:'2.6rem'
+          marginLeft: "2.6rem",
         }}
       >
         <Image
-          src={staticUrl("7.svg")}
-          alt="Portal Logo"
+          src={staticUrl("Logo-1.png")}
+          alt="Billtastic Logo"
           fill
           priority
           unoptimized
           style={{ objectFit: "contain" }}
-          className={`absolute inset-0 transition-opacity duration-200 ease-out ${collapsed ? "opacity-0" : "opacity-100"}`}
+          className={`absolute inset-0 transition-opacity duration-200 ease-out ${
+            collapsed ? "opacity-0" : "opacity-100"
+          }`}
         />
         <Image
-          src={staticUrl("collapsed.png")}
+          src={staticUrl("")}
           alt="Portal Logo (Küçük)"
           fill
           priority
           unoptimized
           style={{ objectFit: "contain" }}
-          className={`absolute inset-0 transition-opacity duration-200 ease-out ${collapsed ? "opacity-100" : "opacity-0"}`}
+          className={`absolute inset-0 transition-opacity duration-200 ease-out ${
+            collapsed ? "opacity-100" : "opacity-0"
+          }`}
         />
       </div>
 
@@ -146,11 +149,9 @@ function SidebarHeader({
   );
 }
 
-
 export default function AppShell({ children }: Props) {
   const screens = Grid.useBreakpoint();
   const isDesktop = !!screens.lg;
-
   const router = useRouter();
   const pathname = usePathname() || "/";
 
@@ -161,12 +162,11 @@ export default function AppShell({ children }: Props) {
   const [avatarSrc, setAvatarSrc] = React.useState<string | undefined>();
   const [companyName, setCompanyName] = React.useState<string>("");
 
-  // 🔐 Rol çözümleme (default: user)
   const [role, setRole] = React.useState<"admin" | "user" | "expert" | "guest">("user");
-  const roleResolved = !!role; // basit bayrak
+  const roleResolved = !!role;
 
+  // 🔹 Kullanıcı bilgilerini çek
   React.useEffect(() => {
-    // sessionStorage hızlı başlangıç
     if (typeof window !== "undefined") {
       try {
         const raw = sessionStorage.getItem("meCache");
@@ -174,56 +174,56 @@ export default function AppShell({ children }: Props) {
           const cached = JSON.parse(raw);
           setMe(cached);
           setCompanyName(cached?.companyName || "");
-          setAvatarSrc(base64ToDataUrl(cached?.logoFile));
-          // rol varsa al
+          setAvatarSrc(base64ToDataUrl(cached?.profileImage));
           const r = (cached?.role || cached?.roles?.[0] || "user").toLowerCase();
           setRole(["admin", "expert", "user"].includes(r) ? (r as any) : "user");
         }
-      } catch { /* no-op */ }
+      } catch {}
     }
 
-    // /auth/me ile güncel durumu al
     let mounted = true;
     (async () => {
       try {
-        const { data } = await api.get("/auth/me");
+        const { data } = await api.get("/users/me");
+
         if (!mounted) return;
         setMe(data);
         setCompanyName(data?.companyName || data?.firmTitle || "");
-        setAvatarSrc(base64ToDataUrl(data?.logoFile));
-        // rol ata
+        setAvatarSrc(base64ToDataUrl(data?.profileImage));
+
         const r = (data?.role || data?.roles?.[0] || "user").toLowerCase();
         setRole(["admin", "expert", "user"].includes(r) ? (r as any) : "user");
 
-        // cache güncelle
-        try {
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem(
-              "meCache",
-              JSON.stringify({
-                companyName: data?.companyName ?? data?.firmTitle ?? "",
-                logoFile: data?.logoFile ?? null,
-                firstName: data?.firstName ?? "",
-                lastName: data?.lastName ?? "",
-                username: data?.username ?? "",
-                role: data?.role ?? null,
-                roles: data?.roles ?? null,
-              })
-            );
-          }
-        } catch {}
+        // ✅ sadece profileImage kaydediliyor
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem(
+            "meCache",
+            JSON.stringify({
+              companyName: data?.companyName ?? data?.firmTitle ?? "",
+              profileImage: data?.profileImage ?? null,
+              firstName: data?.firstName ?? "",
+              lastName: data?.lastName ?? "",
+              username: data?.username ?? "",
+              role: data?.role ?? null,
+              roles: data?.roles ?? null,
+            })
+          );
+        }
       } catch {
         // oturum yoksa sessiz
       }
     })();
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // 🚧 Admin değilse /panel’e girişi engelle (menü zaten gizli)
+  // 🔹 Role göre yönlendirme
   React.useEffect(() => {
     if (!roleResolved) return;
     if (pathname === "/panel" && role !== "admin") {
-      router.replace("/panel"); // uygun landing’e yönlendir
+      router.replace("/panel");
     }
   }, [pathname, roleResolved, role, router]);
 
@@ -305,7 +305,16 @@ export default function AppShell({ children }: Props) {
               />
             )}
 
-            <div style={{ marginLeft: "auto", display: "flex", gap: 8, position: "absolute", top: "1rem", right: "0.5rem" }}>
+            <div
+              style={{
+                marginLeft: "auto",
+                display: "flex",
+                gap: 8,
+                position: "absolute",
+                top: "1rem",
+                right: "0.5rem",
+              }}
+            >
               <Dropdown
                 trigger={["click"]}
                 menu={{
@@ -322,9 +331,18 @@ export default function AppShell({ children }: Props) {
               >
                 <div className="cursor-pointer flex items-center gap-2">
                   {companyName && (
-                    <span className="text-white max-w-[220px] truncate" title={companyName} style={{ lineHeight: 1 }} />
+                    <span
+                      className="text-white max-w-[220px] truncate"
+                      title={companyName}
+                      style={{ lineHeight: 1 }}
+                    />
                   )}
-                  <Avatar alt="Profil" src={avatarSrc} size={36} className="bg-[#0766AD]">
+                  <Avatar
+                    alt="Profil"
+                    src={avatarSrc}
+                    size={36}
+                    className="bg-[#0766AD]"
+                  >
                     {initialsFrom(me) || "AA"}
                   </Avatar>
                 </div>
@@ -334,16 +352,23 @@ export default function AppShell({ children }: Props) {
         </div>
 
         {/* İÇERİK */}
-        <Content className="min-h-0" style={{ minHeight: 0, overflow: "auto", padding: "24px 24px" }}>
+        <Content
+          className="min-h-0"
+          style={{ minHeight: 0, overflow: "auto", padding: "24px 24px" }}
+        >
           <div style={{ marginInline: "auto", maxWidth: 1280 }}>
-            <div className="bg-white rounded-2xl shadow" style={{ background: "white", borderRadius: 16, padding: 16 }}>
+            <div
+              className="bg-white rounded-2xl shadow"
+              style={{ background: "white", borderRadius: 16, padding: 16 }}
+            >
               {children}
             </div>
           </div>
         </Content>
 
         <Footer style={{ textAlign: "center", background: "transparent" }}>
-          © {new Date().getFullYear()} — U2 Soft - Software & Technology Solutions | All Rights Reserved
+          © {new Date().getFullYear()} — U2 Soft - Software & Technology Solutions |
+          All Rights Reserved
         </Footer>
       </Layout>
     </Layout>
