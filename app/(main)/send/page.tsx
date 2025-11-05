@@ -80,24 +80,25 @@ export default function MailPanelPage() {
          Send Mail
   ========================= */
   const sendMail = async () => {
+    // ✅ Email format kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!email) return showAlert('error', 'Lütfen e-posta adresinizi girin!');
+    if (!emailRegex.test(email)) return showAlert('error', 'Geçerli bir e-posta adresi giriniz!');
     if (!subject) return showAlert('error', 'Lütfen konu alanını doldurun!');
     if (!body) return showAlert('error', 'Mesaj içeriğini yazın!');
-
     if (sendMode === 'scheduled' && (!scheduledDate || !scheduledTime)) {
       return showAlert('error', 'Tarihli gönderim için tarih ve saat seçiniz!');
     }
 
     setLoading(true);
     try {
-      // Zaman verilerini hazırlayalım
       const date = sendMode === 'scheduled' ? toDateString(scheduledDate) : toDateString(dayjs());
       const time = sendMode === 'scheduled' ? toTimeString(scheduledTime) : toTimeString(dayjs());
 
       // Eğer dosya varsa FormData gönder
       if (attachment?.originFileObj) {
         const fd = new FormData();
-        fd.append('to', email); // 💥 backend 'to' bekliyor
+        fd.append('to', email);
         fd.append('subject', subject);
         fd.append('body', body);
         fd.append('file', attachment.originFileObj);
@@ -108,14 +109,12 @@ export default function MailPanelPage() {
           method: 'POST',
           body: fd,
         });
-
         if (!res.ok) throw new Error(await res.text());
       } else {
-        // Dosya yoksa JSON ile gönder
         const mailRequest = {
           email: email,
           password: subject,
-          repeatPassword: subject, // geçici eşleştirme
+          repeatPassword: subject,
           date,
           time,
         };
@@ -143,9 +142,13 @@ export default function MailPanelPage() {
     }
   };
 
+  /* =========================
+     Gönder butonunu aktif/pasif yap
+  ========================= */
   const canSend = useMemo(() => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (loading) return false;
-    if (!email || !subject || !body) return false;
+    if (!email || !emailRegex.test(email) || !subject || !body) return false;
     if (sendMode === 'scheduled' && (!scheduledDate || !scheduledTime)) return false;
     return true;
   }, [email, subject, body, sendMode, scheduledDate, scheduledTime, loading]);
@@ -183,13 +186,26 @@ export default function MailPanelPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Alıcı e-posta adresi"
                   type="email"
+                  allowClear
+                  status={
+                    email
+                      ? /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)
+                        ? ''
+                        : 'error'
+                      : ''
+                  }
                 />
+                {email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && (
+                  <Text type="danger">Geçerli bir e-posta adresi giriniz.</Text>
+                )}
               </Col>
+
               <Col xs={24} md={12}>
                 <Input
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Konu"
+                  allowClear
                 />
               </Col>
 
@@ -256,7 +272,7 @@ export default function MailPanelPage() {
                   loading={loading}
                   disabled={!canSend}
                 >
-                  {sendMode === 'scheduled' ? 'Zamanla Gönder' : 'Anında Gönder'}
+                  {sendMode === 'scheduled' ? 'Zamanla Gönder' : 'Gönder'}
                 </Button>
               </Col>
             </Row>

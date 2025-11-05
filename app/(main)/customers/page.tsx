@@ -26,13 +26,13 @@ import {
   DeleteOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import * as XLSX from 'xlsx';
 
 const { Title, Text } = Typography;
 
 /* =====================================
-   1️⃣ Tipler
+   1️ Tipler
 ===================================== */
 export interface RowData {
   id?: number;
@@ -50,7 +50,7 @@ export interface RowData {
 }
 
 /* =====================================
-   2️⃣ Yardımcı Fonksiyonlar
+   2️Yardımcı Fonksiyonlar
 ===================================== */
 const fmtISODate = (d: string | Date | null) => {
   if (!d) return '';
@@ -122,13 +122,13 @@ export default function CustomersPage() {
       contactName: '',
       invoiceEmail: '',
       invoiceNumber: '',
-      euroAmount: 0,
-      dollarAmount: 0,
-      tlAmount: 0,
+      euroAmount: '',
+      dollarAmount: '',
+      tlAmount: '',
       priority: 'Önceliksiz',
       receivableTotal: 0,
       creationDate: fmtISODate(new Date()),
-      dueDate: dayjs(), // ✅ artık dayjs türü
+      dueDate: dayjs(),
     });
     setOpen(true);
   };
@@ -162,7 +162,7 @@ export default function CustomersPage() {
           ? fmtISODate(
               values.dueDate.toDate ? values.dueDate.toDate() : values.dueDate
             )
-          : fmtISODate(new Date()), // ✅ boşsa bugünkü tarih
+          : fmtISODate(new Date()),
       };
 
       const method = editingId ? 'PUT' : 'POST';
@@ -186,12 +186,22 @@ export default function CustomersPage() {
       message.success(editingId ? 'Kayıt güncellendi' : 'Yeni müşteri eklendi');
       setOpen(false);
       form.resetFields();
-    } catch (e) {
+    } catch (e: any) {
       console.error('Kaydetme hatası:', e);
-      notification.error({
-        message: 'Kaydetme hatası',
-        description: (e as Error).message,
-      });
+      // Backend validation hatası (ör: fatura no yanlış)
+      if (e instanceof Error && e.message.startsWith('HTTP 400')) {
+        try {
+          const errObj = JSON.parse(e.message.replace(/^HTTP 400:\s*/, ''));
+          Object.values(errObj).forEach((msg) => message.error(String(msg)));
+        } catch {
+          message.error('Geçersiz veri! Fatura numarasını kontrol edin.');
+        }
+      } else {
+        notification.error({
+          message: 'Kaydetme hatası',
+          description: (e as Error).message,
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -339,6 +349,7 @@ export default function CustomersPage() {
           >
             <Input />
           </Form.Item>
+
           <Form.Item
             label="Yetkili Adı"
             name="contactName"
@@ -346,13 +357,22 @@ export default function CustomersPage() {
           >
             <Input />
           </Form.Item>
+
           <Form.Item
             label="Fatura No"
             name="invoiceNumber"
-            rules={[{ required: true, message: 'Zorunlu alan' }]}
+            rules={[
+              { required: true, message: 'Fatura numarası zorunludur' },
+              {
+                pattern: /^[A-Za-z0-9]{3}[0-9]{15}$/,
+                message:
+                  'Fatura numarası 3 haneli alfa-nümerik birim kodu ve 15 haneli rakamdan oluşmalıdır (toplam 18 karakter).',
+              },
+            ]}
           >
-            <Input />
+            <Input maxLength={18} placeholder="Örn: ABC000000000000123" />
           </Form.Item>
+
           <Form.Item
             label="Vade Tarihi"
             name="dueDate"
@@ -362,22 +382,25 @@ export default function CustomersPage() {
           </Form.Item>
 
           <Row gutter={12}>
-            <Col span={8}>
-              <Form.Item label="₺ TL" name="tlAmount" initialValue={0}>
-                <Input type="number" step="0.01" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="$ Dolar" name="dollarAmount" initialValue={0}>
-                <Input type="number" step="0.01" />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="€ Euro" name="euroAmount" initialValue={0}>
-                <Input type="number" step="0.01" />
-              </Form.Item>
-            </Col>
-          </Row>
+  <Col span={8}>
+    <Form.Item label="₺ TL" name="tlAmount">
+      <Input type="number" step="0.01" placeholder="₺ tutar girin" />
+    </Form.Item>
+  </Col>
+
+  <Col span={8}>
+    <Form.Item label="$ Dolar" name="dollarAmount">
+      <Input type="number" step="0.01" placeholder="$ tutar girin" />
+    </Form.Item>
+  </Col>
+
+  <Col span={8}>
+    <Form.Item label="€ Euro" name="euroAmount">
+      <Input type="number" step="0.01" placeholder="€ tutar girin" />
+    </Form.Item>
+  </Col>
+</Row>
+
 
           <Form.Item label="Öncelik" name="priority" initialValue="Önceliksiz">
             <Select

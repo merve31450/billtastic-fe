@@ -70,7 +70,7 @@ function SidebarHeader({
   return (
     <div
       style={{
-        background: "#0A4875",
+        background: "#0e2f71ff",
         display: "flex",
         alignItems: "center",
         minHeight: "4rem",
@@ -165,7 +165,7 @@ export default function AppShell({ children }: Props) {
   const [role, setRole] = React.useState<"admin" | "user" | "expert" | "guest">("user");
   const roleResolved = !!role;
 
-  // 🔹 Kullanıcı bilgilerini çek
+  //  Kullanıcı bilgilerini çek
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -194,7 +194,7 @@ export default function AppShell({ children }: Props) {
         const r = (data?.role || data?.roles?.[0] || "user").toLowerCase();
         setRole(["admin", "expert", "user"].includes(r) ? (r as any) : "user");
 
-        // ✅ sadece profileImage kaydediliyor
+      
         if (typeof window !== "undefined") {
           sessionStorage.setItem(
             "meCache",
@@ -219,7 +219,7 @@ export default function AppShell({ children }: Props) {
     };
   }, []);
 
-  // 🔹 Role göre yönlendirme
+  // Role göre yönlendirme
   React.useEffect(() => {
     if (!roleResolved) return;
     if (pathname === "/panel" && role !== "admin") {
